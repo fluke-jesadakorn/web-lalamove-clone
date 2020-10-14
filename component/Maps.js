@@ -155,6 +155,8 @@ const Maps = () => {
         this.getDistance(this.state.markerPosition.lat, this.state.markerPosition.lng)
     };
 
+    const val = 5
+
     const AsyncMap = withScriptjs(
         withGoogleMap(
             props => (
@@ -165,7 +167,6 @@ const Maps = () => {
                     center={{ lat: 7.890030, lng: 98.398178 }}
                 >
                     <Marker google={window.google}
-                        name={'Dolores park'}
                         draggable={true}
                         onDragEnd={onMarkerDragEnd}
                         position={{ lat: 7.890030, lng: 98.398178 }}
@@ -187,11 +188,12 @@ const Maps = () => {
                 </GoogleMap>
             )
         )
-    );
+    )
 
-    return (
-        <div>
+    const Render = React.useCallback((val) => {
+        return (
             <AsyncMap
+                val={val}
                 googleMapURL={googleMapURL}
                 loadingElement={
                     <div style={{ height: `100vh` }} />
@@ -203,6 +205,12 @@ const Maps = () => {
                     <div style={{ height: `100vh` }} />
                 }
             />
+        )
+    }, [])
+
+    return (
+        <div>
+            <Render val={val} />
         </div>
     )
 }

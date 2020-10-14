@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import Maps from '../component/Maps'
 import NavigationBar from '../component/NavigationBar'
 import { optionalList, transportTypeList } from '../utils/schema'
@@ -7,19 +7,18 @@ import "keen-slider/keen-slider.min.css";
 
 const Index = () => {
 
-  const [transportType, setTransportType] = useState(transportTypeList[0])
-
   const [wayPoint, setWaypoint] = useState({
     origin: "",
     destination: [""]
   })
 
   const [optional, setOptional] = useState(optionalList[0])
-  const [currentSlide, setCurrentSlide] = React.useState(0);
-  const [sliderRef, slider] = useKeenSlider({
+  const [transportType, setTransportType] = React.useState(0);
+  const [sliderRef] = useKeenSlider({
     initial: 0,
+    afterChange: (val) => setOptional(optionalList[val.details().relativeSlide]),
     slideChanged(s) {
-      setCurrentSlide(s.details().relativeSlide);
+      setTransportType(s.details().relativeSlide);
     }
   });
 
@@ -29,6 +28,7 @@ const Index = () => {
 
   return (
     <div className="h-screen v-screen">
+      <test />
       <NavigationBar />
       <div className="grid grid-cols-2">
         <div className="h-screen flex flex-col">
@@ -41,7 +41,7 @@ const Index = () => {
                 alt="arrow right"
               />
             </div>
-            <div ref={sliderRef} className="keen-slider w-full h-full z-0">
+            <div ref={sliderRef} className="keen-slider w-full h-full">
               {transportTypeList.map((item, key) => (
                 <div
                   key={key}
@@ -112,13 +112,22 @@ const Index = () => {
             บริการเสริม
             {
               optional.optional.map((item, key) => (
-                <div key={key}>{item.string} {item.help ? "have" : null}</div>
+                <span
+                  className="flex flex-row justify-items-center content-center items-center"
+                  key={key}>{item.string}
+                  {item.help ?
+                    <img
+                      className="ml-5 mt-1 w-4 h-4"
+                      src="https://www.flaticon.com/svg/static/icons/svg/37/37171.svg"
+                      alt="Question Mark" /> : null
+                  }
+                </span>
               ))
             }
           </div>
 
         </div>
-        <div className="h-screen">
+        <div className="h-full">
           <Maps />
         </div>
       </div>
