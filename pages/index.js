@@ -4,27 +4,123 @@ import NavigationBar from '../component/NavigationBar'
 import { optionalList, transportTypeList } from '../utils/schema'
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import PlacesAutocomplete, {
+  geocodeByAddress,
+  geocodeByPlaceId,
+  getLatLng,
+} from 'react-places-autocomplete';
 
 const Index = () => {
 
-  const [wayPoint, setWaypoint] = useState({
-    origin: "",
-    destination: [""]
-  })
+  const [wayPoint, setWaypoint] = useState([
+    { id: "0", name: 'จุดเริ่มต้น' },
+    { id: "1", name: 'จุดส่งสินค้า' }
+  ])
 
   const [optional, setOptional] = useState(optionalList[0])
+  const [additionList, setAdditionList] = useState(null)
   const [transportType, setTransportType] = React.useState(0);
+  const [address, setAddress] = useState(null);
   const [sliderRef] = useKeenSlider({
     initial: 0,
-    afterChange: (val) => setOptional(optionalList[val.details().relativeSlide]),
-    slideChanged(s) {
-      setTransportType(s.details().relativeSlide);
-    }
+    slideChanged: (val) => setOptional(optionalList[val.details().relativeSlide]),
   });
 
-  const handleTypeChange = e => {
-
+  const handleAddress = address => {
+    setAddress(address)
   }
+
+  const handleSelect = address => {
+    geocodeByAddress(address)
+      .then(results => getLatLng(results[0]))
+      .then(latLng => console.log('Success', latLng))
+      .catch(error => console.error('Error', error));
+  }
+
+  const handleCheck = (item, key, checked) => {
+    let arr = []
+    optional.optional.map((i, k) => {
+      arr.push(i)
+      if (JSON.stringify(optional.optional[k]) === JSON.stringify(item)) {
+        arr.splice(k, 1, { ...i, checked: checked })
+      }
+    })
+    setOptional({ ...optional, optional: arr })
+  }
+
+  const handleDragend = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(wayPoint);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setWaypoint(items);
+  }
+
+  const DragDrop =
+    <DragDropContext onDragEnd={handleDragend}>
+      <Droppable droppableId="test">
+        {(provided) => (
+          <ul className="flex flex-col" {...provided.droppableProps} ref={provided.innerRef}>
+            {wayPoint.map(({ id, name }, index) => {
+              return (
+                <Draggable key={id} draggableId={id} index={index}>
+                  {(provided) => {
+                    return (
+                      <li class="flex items-center border-b border-teal-500 py-2" ref={provided.innerRef} {...provided.dragHandleProps} {...provided.draggableProps}>
+                        <PlacesAutocomplete
+                          value={address}
+                          onChange={handleAddress}
+                          onSelect={handleSelect}
+                        >
+                          {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+                            <div className="w-full">
+                              <input
+                                {...getInputProps({
+                                  placeholder: name,
+                                  className: 'location-search-input appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none',
+                                })}
+                              />
+                              <div className="autocomplete-dropdown-container">
+                                {loading && <div>Loading...</div>}
+                                {suggestions.map(suggestion => {
+                                  const className = suggestion.active
+                                    ? 'suggestion-item--active'
+                                    : 'suggestion-item';
+                                  // inline style for demonstration purpose
+                                  const style = suggestion.active
+                                    ? { backgroundColor: '#fafafa', cursor: 'pointer' }
+                                    : { backgroundColor: '#ffffff', cursor: 'pointer' };
+                                  return (
+                                    <div
+                                      {...getSuggestionItemProps(suggestion, {
+                                        className,
+                                        style,
+                                      })}
+                                    >
+                                      <span>{suggestion.description}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </PlacesAutocomplete>
+                      </li>
+
+                    )
+                  }}
+
+                </Draggable>
+              )
+            })}
+            {provided.placeholder}
+          </ul>
+        )}
+      </Droppable>
+    </DragDropContext >
 
   return (
     <div className="h-screen v-screen">
@@ -84,28 +180,10 @@ const Index = () => {
           </div>
 
           <div className="h-30 my-5">
-            <div className="flex flex-col">
-              <div class="flex items-center border-b border-teal-500 py-2">
-                <input
-                  class="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none"
-                  type="text"
-                  placeholder="จุดรับสินค้า"
-                  aria-label="Full name"
-                />
+            {DragDrop}
+            <div>
+              เพิ่มจุด
               </div>
-              <div class="flex items-center border-b border-teal-500 py-2">
-                <input
-                  class="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none"
-                  type="text"
-                  placeholder="จุดส่งสินค้า"
-                  aria-label="Full name"
-                />
-
-              </div>
-              <div>
-                เพิ่มจุด
-              </div>
-            </div>
           </div>
 
           <div className="h-50 my-5 flex flex-col">
@@ -113,17 +191,26 @@ const Index = () => {
             {
               optional.optional.map((item, key) => (
                 <span
-                  className="flex flex-row justify-items-center content-center items-center"
-                  key={key}>{item.string}
+                  className="flex flex-row justify-items-center content-center items-center relative"
+                  key={key}
+                >
+                  <input
+                    className="mt-1 mr-3"
+                    type="checkbox"
+                    onChange={(e) => handleCheck(item, key, e.target.checked)}
+                  />
+                  {item.string}
                   {item.help ?
                     <img
                       className="ml-5 mt-1 w-4 h-4"
                       src="https://www.flaticon.com/svg/static/icons/svg/37/37171.svg"
                       alt="Question Mark" /> : null
                   }
+                  <div className="absolute right-0">
+                    {item.checked ? item.addition !== "ฟรี" ? <p>{item.addition} บาท</p> : <p>ฟรี</p> : null}
+                  </div>
                 </span>
-              ))
-            }
+              ))}
           </div>
 
         </div>
@@ -131,8 +218,9 @@ const Index = () => {
           <Maps />
         </div>
       </div>
+
     </div>
   )
 }
 
-export default Index
+export default React.memo(Index)
