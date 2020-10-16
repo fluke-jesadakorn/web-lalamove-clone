@@ -2,43 +2,43 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import Maps from '../component/Maps'
 import NavigationBar from '../component/NavigationBar'
 import { optionalList, transportTypeList } from '../utils/schema'
+import { DragDropContext, Draggable, Droppable, resetServerContext } from 'react-beautiful-dnd';
+import PlacesAutocomplete from 'react-places-autocomplete';
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
-import PlacesAutocomplete, {
-  geocodeByAddress,
-  geocodeByPlaceId,
-  getLatLng,
-} from 'react-places-autocomplete';
+import Geocode from "react-geocode";
+const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || "AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw"
+
+Geocode.setApiKey(API_KEY);
+Geocode.enableDebug(false);
+Geocode.setLanguage("th");
+Geocode.setRegion("th");
 
 const Index = () => {
-
+  const [route, setRoute] = useState({})
+  const [, setForceUpdate] = useState({})
   const [wayPoint, setWaypoint] = useState([
     { id: "0", name: 'จุดเริ่มต้น' },
     { id: "1", name: 'จุดส่งสินค้า' }
   ])
 
+  const [latLng, setLatLng] = useState([
+    {
+      lat: 13.756331, lng: 100.501762
+    },
+    {
+      lat: 13.756331, lng: 100.501762
+    }
+  ])
+
   const [optional, setOptional] = useState(optionalList[0])
-  const [additionList, setAdditionList] = useState(null)
-  const [transportType, setTransportType] = React.useState(0);
-  const [address, setAddress] = useState(null);
+  const [address, setAddress] = useState({});
   const [sliderRef] = useKeenSlider({
     initial: 0,
     slideChanged: (val) => setOptional(optionalList[val.details().relativeSlide]),
   });
 
-  const handleAddress = address => {
-    setAddress(address)
-  }
-
-  const handleSelect = address => {
-    geocodeByAddress(address)
-      .then(results => getLatLng(results[0]))
-      .then(latLng => console.log('Success', latLng))
-      .catch(error => console.error('Error', error));
-  }
-
-  const handleCheck = (item, key, checked) => {
+  const handleCheck = (item, checked) => {
     let arr = []
     optional.optional.map((i, k) => {
       arr.push(i)
@@ -59,6 +59,35 @@ const Index = () => {
     setWaypoint(items);
   }
 
+  const handleAddress = (addressP, index) => {
+    setAddress({ ...address, [index]: addressP })
+  }
+
+  const routing = () => {
+    React.memo(() => setForceUpdate(Math.random(),
+      (prevProps, nextProps) => {
+        console.log(prevProps, nextProps)
+      }))
+  }
+
+  const handleSelect = (addressS, index) => {
+    let spliceLl = latLng
+    setAddress({ ...address, [index]: addressS })
+
+    Geocode.fromAddress(addressS).then(
+      response => {
+        const { lat, lng } = response.results[0].geometry.location;
+        spliceLl.splice(index, 1, { lat, lng })
+        setLatLng(spliceLl)
+      },
+      error => {
+        console.error(error);
+      }
+    );
+    setForceUpdate(Math.random())
+    routing()
+  }
+
   const DragDrop =
     <DragDropContext onDragEnd={handleDragend}>
       <Droppable droppableId="test">
@@ -71,9 +100,9 @@ const Index = () => {
                     return (
                       <li class="flex items-center border-b border-teal-500 py-2" ref={provided.innerRef} {...provided.dragHandleProps} {...provided.draggableProps}>
                         <PlacesAutocomplete
-                          value={address}
-                          onChange={handleAddress}
-                          onSelect={handleSelect}
+                          value={address[index]}
+                          onChange={(addressP) => handleAddress(addressP, index)}
+                          onSelect={(addressS) => handleSelect(addressS, index)}
                         >
                           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
                             <div className="w-full">
@@ -100,7 +129,7 @@ const Index = () => {
                                         style,
                                       })}
                                     >
-                                      <span>{suggestion.description}</span>
+                                      {suggestion.description}
                                     </div>
                                   );
                                 })}
@@ -109,7 +138,6 @@ const Index = () => {
                           )}
                         </PlacesAutocomplete>
                       </li>
-
                     )
                   }}
 
@@ -120,14 +148,40 @@ const Index = () => {
           </ul>
         )}
       </Droppable>
-    </DragDropContext >
+    </DragDropContext>
+
+  const routeFunc = () => {
+    const DirectionsService = new google.maps.DirectionsService();
+
+    DirectionsService.route({
+      origin: new google.maps.LatLng(latLng[0].lat, latLng[0].lng),
+      destination: new google.maps.LatLng(latLng[1].lat, latLng[1].lng),
+      travelMode: google.maps.TravelMode.DRIVING,
+    }, (result, status) => {
+      if (result) setRoute(result)
+      console.log(result)
+    })
+  }
+
+  const addWayPoint = () => {
+    let add = wayPoint
+    add.push({ id: +add.lastIndex + 1, name: 'จุดส่งสินค้า' })
+    setForceUpdate(Math.random())
+  }
+
+  useEffect(() => {
+    resetServerContext()
+  }, [])
 
   return (
     <div className="h-screen v-screen">
-      <test />
       <NavigationBar />
       <div className="grid grid-cols-2">
         <div className="h-screen flex flex-col">
+          <button onClick={() => {
+            setForceUpdate(Math.random())
+            routeFunc()
+          }}>LatLng</button>
 
           <div className="bg-orange-300 h-50 flex flex-row">
             <div className="z-1">
@@ -181,7 +235,7 @@ const Index = () => {
 
           <div className="h-30 my-5">
             {DragDrop}
-            <div>
+            <div onClick={addWayPoint}>
               เพิ่มจุด
               </div>
           </div>
@@ -197,7 +251,7 @@ const Index = () => {
                   <input
                     className="mt-1 mr-3"
                     type="checkbox"
-                    onChange={(e) => handleCheck(item, key, e.target.checked)}
+                    onChange={(e) => handleCheck(item, e.target.checked)}
                   />
                   {item.string}
                   {item.help ?
@@ -215,12 +269,11 @@ const Index = () => {
 
         </div>
         <div className="h-full">
-          <Maps />
+          <Maps latLng={latLng} directions={route} />
         </div>
       </div>
-
-    </div>
+    </div >
   )
 }
 
-export default React.memo(Index)
+export default Index

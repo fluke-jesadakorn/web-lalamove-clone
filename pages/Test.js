@@ -1,12 +1,47 @@
-import React from "react";
-import GooglePlacesAutocomplete from 'react-google-places-autocomplete';
+const { compose, withProps, lifecycle } = require("recompose");
+const {
+  withScriptjs,
+  withGoogleMap,
+  GoogleMap,
+  DirectionsRenderer,
+} = require("react-google-maps");
 
-const Component = () => (
-  <div>
-    <GooglePlacesAutocomplete
-      apiKey="AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw"
-    />
-  </div>
+const MapWithADirectionsRenderer = compose(
+  withProps({
+    googleMapURL: "https://maps.googleapis.com/maps/api/js?key=AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw&v=3.exp&libraries=geometry,drawing,places",
+    loadingElement: <div style={{ height: `100%` }} />,
+    containerElement: <div style={{ height: `400px` }} />,
+    mapElement: <div style={{ height: `100%` }} />,
+  }),
+  withScriptjs,
+  withGoogleMap,
+  lifecycle({
+    componentDidMount() {
+      const DirectionsService = new google.maps.DirectionsService();
+
+      DirectionsService.route({
+        origin: new google.maps.LatLng(41.8507300, -87.6512600),
+        destination: new google.maps.LatLng(41.8525800, -87.6514100),
+        travelMode: google.maps.TravelMode.DRIVING,
+      }, (result, status) => {
+        console.log(result)
+        if (status === google.maps.DirectionsStatus.OK) {
+          this.setState({
+            directions: result,
+          });
+        } else {
+          console.error(`error fetching directions ${result}`);
+        }
+      });
+    }
+  })
+)(props =>
+  <GoogleMap
+    defaultZoom={7}
+    defaultCenter={new google.maps.LatLng(41.8507300, -87.6512600)}
+  >
+    {props.directions && <DirectionsRenderer directions={props.directions} />}
+  </GoogleMap>
 );
 
-export default Component;
+export default MapWithADirectionsRenderer
