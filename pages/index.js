@@ -4,19 +4,21 @@ import NavigationBar from '../component/NavigationBar'
 import { optionalList, transportTypeList } from '../utils/schema'
 import { DragDropContext, Draggable, Droppable, resetServerContext } from 'react-beautiful-dnd';
 import PlacesAutocomplete from 'react-places-autocomplete';
+import Geocode from "react-geocode";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
-import Geocode from "react-geocode";
-const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || "AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw"
+import 'animate.css'
 
+const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || "AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw"
 Geocode.setApiKey(API_KEY);
 Geocode.enableDebug(false);
 Geocode.setLanguage("th");
 Geocode.setRegion("th");
 
 const Index = () => {
+  const [animation, setAnimation] = useState('bike-1535509579156.png')
   const [route, setRoute] = useState({})
-  const [, setForceUpdate] = useState({})
+  const [update, setForceUpdate] = useState(0)
   const [wayPoint, setWaypoint] = useState([
     { id: "0", name: 'จุดเริ่มต้น' },
     { id: "1", name: 'จุดส่งสินค้า' }
@@ -27,7 +29,7 @@ const Index = () => {
       lat: 13.756331, lng: 100.501762
     },
     {
-      lat: 13.756331, lng: 100.501762
+      lat: null, lng: null
     }
   ])
 
@@ -35,7 +37,10 @@ const Index = () => {
   const [address, setAddress] = useState({});
   const [sliderRef] = useKeenSlider({
     initial: 0,
-    slideChanged: (val) => setOptional(optionalList[val.details().relativeSlide]),
+    slideChanged: (val) => {
+      setOptional(optionalList[val.details().relativeSlide])
+
+    },
   });
 
   const handleCheck = (item, checked) => {
@@ -63,13 +68,6 @@ const Index = () => {
     setAddress({ ...address, [index]: addressP })
   }
 
-  const routing = () => {
-    React.memo(() => setForceUpdate(Math.random(),
-      (prevProps, nextProps) => {
-        console.log(prevProps, nextProps)
-      }))
-  }
-
   const handleSelect = (addressS, index) => {
     let spliceLl = latLng
     setAddress({ ...address, [index]: addressS })
@@ -85,8 +83,12 @@ const Index = () => {
       }
     );
     setForceUpdate(Math.random())
-    routing()
+    if (index > 0) routeFunc()
   }
+
+  useEffect(() => {
+    resetServerContext()
+  }, [])
 
   const DragDrop =
     <DragDropContext onDragEnd={handleDragend}>
@@ -158,8 +160,11 @@ const Index = () => {
       destination: new google.maps.LatLng(latLng[1].lat, latLng[1].lng),
       travelMode: google.maps.TravelMode.DRIVING,
     }, (result, status) => {
-      if (result) setRoute(result)
       console.log(result)
+      if (status === "OK") {
+        setRoute(result)
+        setForceUpdate(Math.random())
+      }
     })
   }
 
@@ -169,21 +174,18 @@ const Index = () => {
     setForceUpdate(Math.random())
   }
 
-  useEffect(() => {
-    resetServerContext()
-  }, [])
-
   return (
     <div className="h-screen v-screen">
       <NavigationBar />
       <div className="grid grid-cols-2">
         <div className="h-screen flex flex-col">
           <button onClick={() => {
+            // routeFunc()
             setForceUpdate(Math.random())
-            routeFunc()
           }}>LatLng</button>
 
           <div className="bg-orange-300 h-50 flex flex-row">
+
             <div className="z-1">
               <img
                 className="w-5 h-5 mt-20"
@@ -206,6 +208,8 @@ const Index = () => {
                   <p>{item.limitWeight} Kg</p>
                 </div>
               ))}
+              {/* <img className="w-50 h-50 animate__animated animate__fadeInBottomLeft" src="bike-1535509579156.png" alt="vehicle" /> */}
+
               <div className="absolute z-1 bottom-0 right-0">
                 <img
                   className="w-5 h-5"
@@ -220,6 +224,9 @@ const Index = () => {
               src="moving_cart.065c8f1b.svg" alt="cart"
             />
           </div>
+          {/* <img className="w-50 h-50 animate__animated animate__fadeInBottomLeft" src={animation} alt="vehicle" /> */}
+          {/* <div className={`animate__animated ${animation && 'animate__fadeInBottomLeft'}`}>Car</div>
+          <button onClick={() => setAnimation('Fence-Pickup-1584927873795.png')}>An animated element</button> */}
 
           <div className="h-10 my-5">
             เส้นทาง (สูงสุด 20)
@@ -269,7 +276,7 @@ const Index = () => {
 
         </div>
         <div className="h-full">
-          <Maps latLng={latLng} directions={route} />
+          <Maps latLng={latLng} directions={route} rerender={routeFunc} />
         </div>
       </div>
     </div >

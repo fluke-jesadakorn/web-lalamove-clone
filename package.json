@@ -10,9 +10,11 @@
     "out": "yarn build && yarn export"
   },
   "dependencies": {
+    "animate.css": "^4.1.1",
     "keen-slider": "^5.2.4",
     "next": "9.5.5",
     "react": "16.13.1",
+    "react-animations": "^1.0.0",
     "react-beautiful-dnd": "^13.0.0",
     "react-dom": "16.13.1",
     "react-geocode": "^0.2.2",
@@ -20,6 +22,7 @@
     "react-google-maps": "^9.4.5",
     "react-google-places-autocomplete": "^3.0.0",
     "react-places-autocomplete": "^7.3.0",
+    "recoil": "^0.0.13",
     "tailwindcss": "^1.8.13"
   },
   "devDependencies": {

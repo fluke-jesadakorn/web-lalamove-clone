@@ -11,7 +11,7 @@ class MyDocument extends Document {
         return (
             <Html>
                 <Head>
-                    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw&v=3.exp&libraries=geometry,drawing,places"></script>
+                    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw&libraries=geometry,drawing,places"></script>
                 </Head>
                 <body>
                     <Main />

@@ -1,47 +1,50 @@
-const { compose, withProps, lifecycle } = require("recompose");
-const {
-  withScriptjs,
-  withGoogleMap,
-  GoogleMap,
-  DirectionsRenderer,
-} = require("react-google-maps");
+import React from 'react'
 
-const MapWithADirectionsRenderer = compose(
-  withProps({
-    googleMapURL: "https://maps.googleapis.com/maps/api/js?key=AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw&v=3.exp&libraries=geometry,drawing,places",
-    loadingElement: <div style={{ height: `100%` }} />,
-    containerElement: <div style={{ height: `400px` }} />,
-    mapElement: <div style={{ height: `100%` }} />,
-  }),
-  withScriptjs,
-  withGoogleMap,
-  lifecycle({
-    componentDidMount() {
-      const DirectionsService = new google.maps.DirectionsService();
+const Test = () => {
 
-      DirectionsService.route({
-        origin: new google.maps.LatLng(41.8507300, -87.6512600),
-        destination: new google.maps.LatLng(41.8525800, -87.6514100),
-        travelMode: google.maps.TravelMode.DRIVING,
-      }, (result, status) => {
-        console.log(result)
-        if (status === google.maps.DirectionsStatus.OK) {
-          this.setState({
-            directions: result,
-          });
-        } else {
-          console.error(`error fetching directions ${result}`);
-        }
-      });
-    }
+  const [count, setCount] = React.useState(0)
+  const [count2, setCount2] = React.useState(0)
+  const [update, setUpdate] = React.useState(0)
+
+  const Count = (({ count }) => {
+    return <>
+      <div>{count}</div>
+      {/* <div>{count2}</div> */}
+      <button onClick={addCount}>Add Count</button>
+      <button onClick={addCount2}>Add Count2</button>
+      <button onClick={toggle}>Toggle</button>
+    </>
   })
-)(props =>
-  <GoogleMap
-    defaultZoom={7}
-    defaultCenter={new google.maps.LatLng(41.8507300, -87.6512600)}
-  >
-    {props.directions && <DirectionsRenderer directions={props.directions} />}
-  </GoogleMap>
-);
 
-export default MapWithADirectionsRenderer
+  React.memo(Count, (prev, next) => {
+    if (prev.count === next.count)
+      return false
+  })
+
+  const toggle = () => {
+    setUpdate(prev => prev + 1)
+  }
+
+  const Count2 = React.useCallback(() => <div>{count2}</div>, [count2])
+
+  const addCount = () => {
+    setCount(prev => prev + 1)
+  }
+
+  const addCount2 = () => {
+    setCount2(prev => prev + 1)
+  }
+
+  return (
+    <div>
+      <Count count={count} />
+      <div><Count2 /></div>
+      <div>{update}</div>
+      {/* <button onClick={addCount}>Add Count</button>
+      <button onClick={addCount2}>Add Count2</button>
+      <button onClick={toggle}>Toggle</button> */}
+    </div>
+  )
+}
+
+export default Test
