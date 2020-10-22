@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import Maps from '../component/Maps'
 import NavigationBar from '../component/NavigationBar'
 import { optionalList, transportTypeList } from '../utils/schema'
@@ -7,7 +7,7 @@ import PlacesAutocomplete from 'react-places-autocomplete';
 import Geocode from "react-geocode";
 import { useKeenSlider } from "keen-slider/react";
 import "keen-slider/keen-slider.min.css";
-import 'animate.css'
+import gsap from 'gsap'
 
 const API_KEY = process.env.REACT_APP_GOOGLE_API_KEY || "AIzaSyAlULpCzs57poHJ0CQWp9cZs0n2Tak2Qyw"
 Geocode.setApiKey(API_KEY);
@@ -16,7 +16,16 @@ Geocode.setLanguage("th");
 Geocode.setRegion("th");
 
 const Index = () => {
-  const [animation, setAnimation] = useState('bike-1535509579156.png')
+
+  const vhDriving = useRef()
+
+  const vh = [
+    useRef(),
+    useRef(),
+    useRef(),
+    useRef()
+  ]
+
   const [route, setRoute] = useState({})
   const [update, setForceUpdate] = useState(0)
   const [wayPoint, setWaypoint] = useState([
@@ -35,11 +44,16 @@ const Index = () => {
 
   const [optional, setOptional] = useState(optionalList[0])
   const [address, setAddress] = useState({});
-  const [sliderRef] = useKeenSlider({
+  const [currentSlider, setCurrenSlider] = useState(0)
+  const [sliderRef, slider] = useKeenSlider({
     initial: 0,
+    loop: true,
     slideChanged: (val) => {
       setOptional(optionalList[val.details().relativeSlide])
-
+      setCurrenSlider(val.details().relativeSlide)
+      gsap.fromTo(vhDriving.current, 1,
+        { x: -100, y: 100 },
+        { x: 0, y: 0 })
     },
   });
 
@@ -174,59 +188,85 @@ const Index = () => {
     setForceUpdate(Math.random())
   }
 
+  const compareVehicel = (item, index) => {
+    if (currentSlider === index) return item.logoFilledUrl
+    else return item.logoUrl
+  }
+
+  const compareVehicelDriving = (index) => currentSlider === index ? true : false
+
   return (
     <div className="h-screen v-screen">
       <NavigationBar />
       <div className="grid grid-cols-2">
-        <div className="h-screen flex flex-col">
-          <button onClick={() => {
-            // routeFunc()
-            setForceUpdate(Math.random())
-          }}>LatLng</button>
 
-          <div className="bg-orange-300 h-50 flex flex-row">
+        <div className="flex flex-col">
 
-            <div className="z-1">
+          <div className="pt-10 bg-orange-300 flex flex-col">
+
+            <div className="relative flex flex-row justify-center items-center">
+
+              {transportTypeList.map((item, index) => {
+                return compareVehicelDriving(index) && <img
+                  ref={vhDriving}
+                  key={index}
+                  className="h-20"
+                  src={item.imgUrl}
+                  alt="vehicle Driving" />
+              })}
+
               <img
-                className="w-5 h-5 mt-20"
+                onClick={() => slider.prev()}
+                className="w-5 h-5 bottom-0 left-0"
                 src="https://www.flaticon.com/svg/static/icons/svg/120/120892.svg"
+                alt="arrow left"
+              />
+              <div ref={sliderRef} className="keen-slider w-full h-full">
+                {transportTypeList.map((item, key) => (
+                  <div
+                    key={key}
+                    className={`keen-slider__slide number-slide${key + 1} flex flex-col justify-center items-center`}>
+                    <img
+                      className="w-5 h-5"
+                      src="https://www.flaticon.com/svg/static/icons/svg/3468/3468846.svg"
+                      alt="box"
+                    />
+                    <p>{item.string}</p>
+                    <p>{item.description}</p>
+                    <p>{item.limitWeight} Kg</p>
+                  </div>
+                ))}
+              </div>
+
+              <img
+                onClick={() => slider.next()}
+                className="w-5 h-5"
+                src="https://www.flaticon.com/svg/static/icons/svg/120/120893.svg"
                 alt="arrow right"
               />
+
+              <img
+                className="float-right m-5"
+                src="moving_cart.065c8f1b.svg" alt="cart"
+              />
             </div>
-            <div ref={sliderRef} className="keen-slider w-full h-full">
-              {transportTypeList.map((item, key) => (
-                <div
-                  key={key}
-                  className={`keen-slider__slide number-slide${key + 1} flex flex-col justify-center items-center`}>
+            <div className="flex flex-column justify-center">
+              {transportTypeList.map((item, index) => {
+                return (
                   <img
-                    className="w-5 h-5"
-                    src="https://www.flaticon.com/svg/static/icons/svg/3468/3468846.svg"
-                    alt="box"
+                    key={index}
+                    ref={vh[index]}
+                    onClick={() => slider.moveToSlide(index)}
+                    onMouseEnter={() => gsap.fromTo(vh[index].current, { scaleX: 1, scaleY: 1 }, { scaleX: 1.5, scaleY: 1.5 })}
+                    onMouseLeave={() => gsap.fromTo(vh[index].current, { scaleX: 1.5, scaleY: 1.5 }, { scaleX: 1, scaleY: 1 })}
+                    className="ml-2 mr-2 w-20 h-20"
+                    src={compareVehicel(item, index)}
+                    alt="select Vehicle"
                   />
-                  <p>{item.string}</p>
-                  <p>{item.description}</p>
-                  <p>{item.limitWeight} Kg</p>
-                </div>
-              ))}
-              {/* <img className="w-50 h-50 animate__animated animate__fadeInBottomLeft" src="bike-1535509579156.png" alt="vehicle" /> */}
-
-              <div className="absolute z-1 bottom-0 right-0">
-                <img
-                  className="w-5 h-5"
-                  src="https://www.flaticon.com/svg/static/icons/svg/120/120893.svg"
-                  alt="arrow right"
-                />
-              </div>
+                )
+              })}
             </div>
-
-            <img
-              className="float-right"
-              src="moving_cart.065c8f1b.svg" alt="cart"
-            />
           </div>
-          {/* <img className="w-50 h-50 animate__animated animate__fadeInBottomLeft" src={animation} alt="vehicle" /> */}
-          {/* <div className={`animate__animated ${animation && 'animate__fadeInBottomLeft'}`}>Car</div>
-          <button onClick={() => setAnimation('Fence-Pickup-1584927873795.png')}>An animated element</button> */}
 
           <div className="h-10 my-5">
             เส้นทาง (สูงสุด 20)
@@ -236,8 +276,6 @@ const Index = () => {
             <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-4 border border-gray-400 rounded shadow">
               นำเข้าที่อยู่
             </button>
-          </div>
-          <div>
           </div>
 
           <div className="h-30 my-5">

@@ -25,7 +25,7 @@ const Maps = ({ latLng, directions, rerender }) => {
                         onBoundsChanged={() => {
                             forceUpdate(Math.random())
                         }}
-                        google={window.google}
+                        // google={window.google}
                         defaultZoom={20}
                         defaultCenter={{ lat: latLng[0].lat, lng: latLng[0].lng }}
                         center={{ lat: latLng[0].lat, lng: latLng[0].lng }}
