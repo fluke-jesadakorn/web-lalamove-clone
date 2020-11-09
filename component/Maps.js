@@ -11,7 +11,8 @@ Geocode.setRegion("th");
 const Maps = ({ latLng, directions, rerender }) => {
     const [, forceUpdate] = useState(0)
 
-    let googleMapURL = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=geometry,drawing,places`
+    // let googleMapURL = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=geometry,drawing,places`
+    let googleMapURL = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=geometry`
 
     const onInfoWindowClose = (event) => {
 
@@ -19,13 +20,13 @@ const Maps = ({ latLng, directions, rerender }) => {
 
     const AsyncMap = useMemo(() => {
         return withScriptjs(
-            withGoogleMap(({ latLng, directions }) => {
+            withGoogleMap(({ latLng, directions, googleMapURL }) => {
                 return (
                     <GoogleMap
                         onBoundsChanged={() => {
                             forceUpdate(Math.random())
                         }}
-                        // google={window.google}
+                        google={googleMapURL}
                         defaultZoom={20}
                         defaultCenter={{ lat: latLng[0].lat, lng: latLng[0].lng }}
                         center={{ lat: latLng[0].lat, lng: latLng[0].lng }}

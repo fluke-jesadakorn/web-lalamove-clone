@@ -196,11 +196,12 @@ const Index = () => {
   const compareVehicelDriving = (index) => currentSlider === index ? true : false
 
   return (
-    <div className="h-screen v-screen">
+    <div className="h-screen">
       <NavigationBar />
+      <button onClick={() => setForceUpdate(Math.random())}></button>
       <div className="grid grid-cols-2">
 
-        <div className="flex flex-col">
+        <div className="flex flex-col overflow-y-auto">
 
           <div className="pt-10 bg-orange-300 flex flex-col">
 
