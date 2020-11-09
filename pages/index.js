@@ -260,7 +260,7 @@ const Index = () => {
                     onClick={() => slider.moveToSlide(index)}
                     onMouseEnter={() => gsap.fromTo(vh[index].current, { scaleX: 1, scaleY: 1 }, { scaleX: 1.5, scaleY: 1.5 })}
                     onMouseLeave={() => gsap.fromTo(vh[index].current, { scaleX: 1.5, scaleY: 1.5 }, { scaleX: 1, scaleY: 1 })}
-                    className="ml-2 mr-2 w-20 h-20"
+                    className="ml-2 mr-2 w-20 h-20 cursor-pointer"
                     src={compareVehicel(item, index)}
                     alt="select Vehicle"
                   />
